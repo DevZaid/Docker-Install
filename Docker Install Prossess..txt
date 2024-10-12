@@ -1,0 +1,186 @@
+# sudo yum -y update
+
+Uninstall old versions:
+# sudo yum -y remove docker docker-common docker-selinux docker-engine
+
+Install required dependencies:
+# sudo yum -y install yum-utils device-mapper-persistent-data lvm2
+
+Setup stable repo:
+# sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+Install Docker CE:
+# sudo yum -y install docker-ce docker-ce-cli containerd.io docker-compose-plugin
+
+Start and enable docker service:
+# sudo systemctl start docker && sudo systemctl enable docker
+
+Add your user account (centos user)  to the docker group:
+# sudo usermod -aG docker centos
+# newgrp docker
+
+Check service status:
+# systemctl status docker
+# docker version
+
+
+***How To Install Docker Compose on Linux***
+
+Compose is a tool for defining and running multi-container Docker application. A YAML file is used to configure your application’s services.
+You need curl and wget installed on your system for this operation. And definitely, access to the Terminal as a user with sudo privileges.
+
+***FOR CENTOS***
+# sudo yum -y install curl wget
+
+Once curl has been installed, download the latest Compose on your Linux machine.
+We will check the Github API releases page for the project, and pull the latest binary file.
+# curl -s https://api.github.com/repos/docker/compose/releases/latest | grep browser_download_url  | grep docker-compose-linux-x86_64 | cut -d '"' -f 4 | wget -qi -
+
+Make the binary file executable.
+# chmod +x docker-compose-linux-x86_64
+
+Move the file to your PATH.
+# sudo mv docker-compose-linux-x86_64 /usr/local/bin/docker-compose
+
+Confirm version.
+# docker-compose version
+
+Add user to docker group:
+# sudo usermod -aG docker $USER
+# newgrp docker
+
+Configure Compose Command-line completion
+
+Place the completion script in /etc/bash_completion.d/
+# cd /etc/bash_completion.d/ && sudo curl -L https://raw.githubusercontent.com/docker/compose/master/contrib/completion/bash/docker-compose -o /etc/bash_completion.d/docker-compose
+
+Source the file or re-login to enjoy completion feature.
+# source /etc/bash_completion.d/docker-compose
+
+***Test Docker Compose installation***
+
+Create a test Docker Compose file
+# vim docker-compose.yml
+
+Add below data to the file
+version: '3'
+services:
+  web:
+    image: nginx:latest
+    ports:
+     - "8080:80"
+    links:
+     - php
+  php:
+    image: php:7-fpm
+
+Start service containers
+# docker-compose up -d
+
+Show running Containers
+# docker-compose ps
+
+Destroy containers
+# docker-compose stop
+# docker-compose rm -f
+
+
+***LABS***
+# sudo yum -y install git
+
+# git clone https://github.com/sixeyed/diamol.git
+
+ Enter this command, which will run the Hello World container:
+# docker container run diamol/ch02-hello-diamol
+
+So what is a container?
+
+A Docker container is the same idea as a physical container—think of it like a box with
+an application in it. Inside the box, the application seems to have a computer all to
+itself: it has its own machine name and IP address, and it also has its own disk drive
+
+Connecting to a container like a remote computer
+
+# docker container run --interactive --tty diamol/base
+
+The --interactive flag tells Docker you want to set up a connection to the container,
+and the --tty flag means you want to connect to a terminal session inside the container.
+Run the commands hostname and date and you’ll see details of
+
+the container’s environment:
+# hostname
+# date
+
+Open up a new terminal session, and you can get details of all
+the running containers with this command:
+# sudo docker container ls
+
+docker container top lists the processes running in the container. 
+# sudo docker container top c42a6e9b6b1d
+
+docker container logs displays any log entries the container
+has collected:
+# docker container logs c42a6e9b6b1d
+
+docker container inspect shows you all the details of a
+container:
+# sudo docker container inspect c42a6e9b6b1d
+
+
+***Hosting a website in a container***
+
+ Run 
+
+# docker container ls --all    (which shows all containers in any status:)
+
+# docker container run diamol/ch02-hello-diamol
+
+Here’s a simple example, running a website in a container:
+docker container run --detach --publish 8088:80 diamol/ch02-hellodiamol-web
+
+# docker run --detach --publish 8088:80 diamol/ch02-hello-diamol-web
+
+The image you’ve just used is diamol/ch02-hello-diamol-web. That image includes
+the Apache web server and a simple HTML page. When you run this container, you
+have a full web server running, hosting a custom website. Containers that sit in the
+background and listen for network traffic (HTTP requests in this case) need a couple
+of extra flags in the container run command:
+ --detach—Starts the container in the background and shows the container ID
+ --publish—Publishes a port from the container to the computer
+
+# Browse to the published port on localhost:8088
+
+# docker container stats <ID>
+
+Run this command to remove all your containers:
+# docker container rm --force $(docker container ls --all --quiet)
+
+
+>>>USEFUL COMMAND<<<
+
+# docker container
+
+***Lab: Exploring the container filesystem***
+
+Here we go: your task is to run the website container from this session, but replace
+the index.html file so when you browse to the container you see a different homepage
+
+# docker container run --detach --publish 8088:80 diamol/ch02-hello-diamol-web
+
+# docker container ls 
+
+  0f0630a5c273 (ContainerID)
+
+# cd /home/centos/diamol/ch02/lab/
+
+ Edit hello-diamol-web/html/index 
+#Sudo vim index.html
+
+# docker container exec <Container ID>  ls /usr/local/apache2/htdocs
+
+it will show:
+index.html
+
+# docker container cp index.html <Container ID>:/usr/local/apache2/htdocs/index.html
+
+# Browse to the published port on http://localhost:8088
